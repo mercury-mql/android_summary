@@ -1,8 +1,8 @@
 # 窗口 Activity
-***
-## 基本知识点
 
-### 1. 生命周期
+***
+
+## 1. 生命周期
 
 ![](images/activity_lifecycle.png)
 
@@ -13,13 +13,13 @@
 焦点（交互性）： onPause ——> onResume ——> onPause
 
 
-#### onCreate
+### onCreate
 
 完成绝大多数初始化工作。
 
 如果直接在这里调用finish(),将跳过其他生命周期方法（onStart、onResume、onPause、onStop之类），直接执行onDestroy方法。
 
-#### onResume
+### onResume
 
 可用于：
 
@@ -28,7 +28,7 @@
 - 注册BroadcastReceiver
 
 
-#### onPause
+### onPause
 
 当Activity A处于栈顶位置，此时新建Activity B（B将成为栈顶，压在A上方），则在A的onPause执行完毕并返回后，B的创建工作才开始，所以不要在onPause中做耗时的工作。
 
@@ -48,7 +48,7 @@
 常见的做法是：onSaveInstanceState保存按实例（per-instance）的信息，而onPause用于保存全局性的持久化数据（比如在ContentProvider中的，file中的）
 
 
-#### onDestroy
+### onDestroy
 
 做最后资源清理的地方。有两种调用场景：
 
@@ -62,12 +62,12 @@
 
 ***
 
-### 2. 几个重要的函数
+## 2. 几个重要的函数
 
-#### onRestoreInstanceState
+### onRestoreInstanceState
 onRestoreInstanceState在onStart之后，onPostCreate之前被调用。它的默认实现会恢复在onSaveInstanceState默认实现中保存的UI控件的状态，所以如果要覆盖该方法，一定要调用super.onRestoreInstanceState。但一般情况下，不会覆盖该方法。
 
-#### onSaveInstanceState
+### onSaveInstanceState
 
 当系统内存吃紧时，系统会销毁长期被停止（stop）的窗口对象，这些对象往往位于回退栈的底层，系统销毁这些窗口对象时，不仅会销毁窗口对象本身（onDestroy），同时也销毁该窗口对象的状态。当此窗口再次回到栈顶时，系统不仅需要重新构建窗口对象（通过onCreate），同时也要恢复窗口的状态（这就需要在窗口被kill前将系统状态保存下来），onSaveInstanceState就提供了一个保存窗口状态的时机。
 
@@ -80,7 +80,7 @@ onSaveInstanceState的默认实现会将Activity中有android：id的UI控件的
 被onSaveInstanceState保存下来的状态（Bundle对象）可在onCreate或onRestoreInstanceState中恢复，更常见的是在onCreate中。
 
 
-#### finish
+### finish
 
 结束当前Activity。用户按Back键时会调用onBackPressed函数，该函数的默认实现也是调用了finish。
 
@@ -88,7 +88,7 @@ finish调用发生在onPause之前，所以可以在onPause中通过isFinishing�
 
 finish会把ActivityResult(默认为RESULT_CANCELED)通过onActivityResult回传给任何启动它的Activity。
 
-#### setResult
+### setResult
 
 <pre>
 public final void setResult (int resultCode)
@@ -103,7 +103,7 @@ intent中可以设置<br/>
 **Intent.FLAG\_GRANT\_WRITE\_URI\_PERMISSION**. <br/>
 如果设置了这样的标志，收到这个result的Actvity（简称为接收Activity）将会被赋予访问（读写）Intent中所包含的URI的权限。这种访问权限将会一直保持到“接受Activity”结束（如果接收Activity被kill或其他临时性的释放，此种访问权限依然能够保持）。通过这种方式赋予的权限会添加到“接收Activity”目前持有的权限集中。
 
-#### onActivityResult
+### onActivityResult
 
 <pre>protected void onActivityResult (int requestCode, int resultCode, Intent data)</pre>
 
@@ -114,7 +114,7 @@ intent中可以设置<br/>
 如果设置android：noHistory为true，那么此方法永远不会被调用。
 
 
-#### startActivityForResult
+### startActivityForResult
 
 <pre>
 public void startActivityForResult (Intent intent, int requestCode)
@@ -132,6 +132,64 @@ public void startActivityForResult (Intent intent, int requestCode, Bundle optio
 有一种特殊情况，当在onCreate或onResume中以requestCode>=0的形式调用startActivityForResult时，则当前窗口不会显示，而直接显示子窗口，从而避免了闪烁。
 
 ***
+
+## 3. Intent
+
+### Intent中包含的信息
+
+- Action
+- Category
+- Data
+- Extra
+- Flags
+
+### 访问窗口
+
+### 过滤机制
+
+***
+
+## 4. Activity间传递数据的其他方式（除Intent之外）
+
+### 静态变量
+
+### 剪贴板
+
+### 全局对象
+
+***
+
+## 5. Activity的常见属性
+
+***
+
+## 6. Activity的启动模式与Flags
+
+***
+
+## 7. Activity常用事件
+
+***
+
+## 8. 几个常用效果
+
+### 全屏显示
+
+### 标题栏定制
+
+### 点击两次关闭窗口
+
+### Splash
+
+### 关闭所有窗口
+
+### 窗口截屏
+
+***
+
+## 9. 显示系统窗口
+
+
 
 
 
