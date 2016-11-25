@@ -15,3 +15,7 @@
 ## AIDL
 
 ## 更便捷的方式——IntentService
+
+[http://android.xsoftlab.net/guide/components/services.html](http://android.xsoftlab.net/guide/components/services.html)
+
+[http://android.xsoftlab.net/reference/android/app/Service.html](http://android.xsoftlab.net/reference/android/app/Service.html)
