@@ -137,11 +137,68 @@ public void startActivityForResult (Intent intent, int requestCode, Bundle optio
 
 ### Intent中包含的信息
 
-- Action
-- Category
-- Data
-- Extra
-- Flags
+#### 3.1 Component name
+
+可以直接在Intent中指定要访问的对象，这可用于显式访问。有这么几种方式：
+
+##### 方式一：直接指定class
+
+<pre><code>
+Intent intent = new Intent(MainActivity.this, TargetActivity.class)
+</code></pre>
+
+##### 方式二：使用setClass
+
+函数原型：
+<pre><code>
+Intent setClass(Context packageContext, Class<?> cls)
+</code></pre>
+等价于Intent的另一个构造函数：
+<pre><code>
+public Intent(Context packageContext, Class<?> cls)
+</code></pre>
+
+用法：
+<pre><code>
+Intent intent = new Intent();
+intent.setClass(MainActivity.this, TargetActivity.class);
+</code></pre>
+
+##### 方式三：使用setClassName
+
+函数原型：
+<pre><code>
+Intent setClassName(Context packageContext, String className)
+
+Intent	setClassName(String packageName, String className)
+</code></pre>
+
+其中，className指的是“类全名”（即包名+类名）
+
+##### 方式四：使用setComponent
+
+函数原型：
+<pre><code>
+Intent setComponent(ComponentName component)
+</code></pre>
+
+需要首先创建ComponentName对象，使用：
+<pre><code>
+ComponentName(String pkg, String cls)
+
+ComponentName(Context pkg, String cls)
+
+ComponentName(Context pkg, Class<?> cls)
+
+ComponentName(Parcel in)
+</code></pre>
+
+#### 3.2 Action
+动作。本质是一个字符串。
+#### 3.3 Category
+#### 3.4 Data
+#### 3.5 Extra
+#### 3.6 Flags
 
 ### 访问窗口
 
