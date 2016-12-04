@@ -218,6 +218,75 @@ ComponentName(Parcel in)
 
 ## 5. Activity的常见属性
 
+### android:name
+唯一必须设置的属性，标识了Activity的类，其值可以为：
+- 相对类名（相对于<manifest/>中的package的属性值），指定相对类名时，以“.”开头，类由package+android：name来确定
+
+- 绝对类名（完整的类名）
+
+### android：label
+标题文本
+
+### android：icon
+标题图像
+
+**如果未设置Activity的android：label或android：icon，会使用Application的同名属性；如Application也未设置，会使用系统的默认值**
+
+### android：screenOrientation
+Activity显示的方向。在Java代码中，可使用
+<pre><code>
+void setRequestedOrientation(int requestedOrientation)
+</code></pre>
+
+### android:configChanges
+默认情况下，配置变化后，Activity会自己通过销毁和重建的方式来出来这些变化。但可以通过android：configChanges属性来改变这种情况。
+
+可以通过android：configChanges来指定一项或多项配置，那么当这些配置发生变化时，系统会回调<pre><code>
+public void onConfigurationChanged (Configuration newConfig)
+</code></pre>
+
+### android:enabled
+是否允许该Activity被实例化，默认值为true。
+如设为false，则该Activity不能被实例化。
+
+### android：excludeFromRecents
+是否将该Activity排除在最近应用之外。默认值为false。
+如设为true，则该Activity不会显示在最近应用的列表中。
+
+### android：exported
+是否允许其他APP访问该Activity，默认为true。其值在对于APP内部的访问无效果。
+**即使exported被设为true，也必须指定一个Action才能实现“隐式访问”的效果**
+
+### android：hardwareAccelerated
+硬件加速。默认为false。
+
+### android：multiprocess
+该Activity的实例能否运行在多个process中。默认值是false。
+
+### android：noHistory
+该Activity是否不进入回退栈，默认为false。
+如设为true，那么该Activity不会进入回退栈，用户无法返回到该Activity，它的onActivityResult永远不会得到调用。
+
+### android：parentActivityName
+该Activity的逻辑parent，即当用户点击Action Bar中的UP按钮时，系统会根据这个属性的值来决定哪一个Activity将会被启用。
+
+### android：permission
+
+### android：process
+
+### android：stateNotNeeded
+
+### android：theme
+
+### android：uiOptions
+
+### android：alwaysRetainTaskState
+
+### android：clearTaskOnLaunch
+
+### android：finishOnTaskLaunch
+
+
 ***
 
 ## 6. Activity的启动模式与Flags
