@@ -263,29 +263,66 @@ public void onConfigurationChanged (Configuration newConfig)
 ### android：multiprocess
 该Activity的实例能否运行在多个process中。默认值是false。
 
+默认情况下，Activity实例运行在定义它的APP的进程中，因此所有的实例运行在同一个process中。然而，当android：multiprocess被设为true时，Activity的实例运行在启动它的组件的process中（也就是说同一Activity的不同实例运行在不同的process中）
+
 ### android：noHistory
 该Activity是否不进入回退栈，默认为false。
-如设为true，那么该Activity不会进入回退栈，用户无法返回到该Activity，它的onActivityResult永远不会得到调用。
+如设为true，那么该Activity不会进入回退栈，当用户离开它时（比如通过startActivity启动一个其他的Activity）时，它的finish()被调用，用户无法返回到该Activity，它的onActivityResult永远不会得到调用。
+
 
 ### android：parentActivityName
 该Activity的逻辑parent，即当用户点击Action Bar中的UP按钮时，系统会根据这个属性的值来决定哪一个Activity将会被启用。
 
 ### android：permission
+该Activity的权限。如果一个组件通过startActivity或startActivityForResult试图启动这个Activity时，该组件需要在它的manifest中使用<uses-permission\>声明这一权限，否则此Activity不会受到intent。
+如果android：permission未被设置，它会使用<application\>的同名属性，如果<application\>也未设置该属性，那么该Activity没有被权限保护。
+
 
 ### android：process
+指明此Activity应该运行在的process。
+通常情况下，一个APP的所有组件都运行在同一个process中，这个process的名称就是APP的名称。
+
+android：process这个属性就允许你修改默认的process名称，从而使APP的各个组件能够运行在不同的process中。android：process的值有两种情况：
+
+- 以“：”开头，该process是该APP私有的，它在合适的时间创建，被声明的Activity就运行在这个process中。
+
+- 不以“：”开头，该process是全局的，这意味着不同APP中的组件可以共享这一process。
+
 
 ### android：stateNotNeeded
 
+Whether or not the activity can be killed and successfully restarted without having saved its state — "true" if it can be restarted without reference to its previous state, and "false" if its previous state is required. The default value is "false".
+Normally, before an activity is temporarily shut down to save resources, its onSaveInstanceState() method is called. This method stores the current state of the activity in a Bundle object, which is then passed to onCreate() when the activity is restarted. If this attribute is set to "true", onSaveInstanceState() may not be called and onCreate() will be passed null instead of the Bundle — just as it was when the activity started for the first time.
+
+A "true" setting ensures that the activity can be restarted in the absence of retained state. For example, the activity that displays the home screen uses this setting to make sure that it does not get removed if it crashes for some reason.
+
 ### android：theme
+
+A reference to a style resource defining an overall theme for the activity. This automatically sets the activity's context to use this theme (see setTheme(), and may also cause "starting" animations prior to the activity being launched (to better match what the activity actually looks like).
+If this attribute is not set, the activity inherits the theme set for the application as a whole — from the <application> element's theme attribute. If that attribute is also not set, the default system theme is used. For more information, see the Styles and Themes developer guide.
 
 ### android：uiOptions
 
+
+
 ### android：alwaysRetainTaskState
 
+Whether or not the state of the task that the activity is in will always be maintained by the system — "true" if it will be, and "false" if the system is allowed to reset the task to its initial state in certain situations. The default value is "false". This attribute is meaningful only for the root activity of a task; it's ignored for all other activities.
+Normally, the system clears a task (removes all activities from the stack above the root activity) in certain situations when the user re-selects that task from the home screen. Typically, this is done if the user hasn't visited the task for a certain amount of time, such as 30 minutes.
+
+However, when this attribute is "true", users will always return to the task in its last state, regardless of how they get there. This is useful, for example, in an application like the web browser where there is a lot of state (such as multiple open tabs) that users would not like to lose.
 ### android：clearTaskOnLaunch
 
-### android：finishOnTaskLaunch
+Whether or not all activities will be removed from the task, except for the root activity, whenever it is re-launched from the home screen — "true" if the task is always stripped down to its root activity, and "false" if not. The default value is "false". This attribute is meaningful only for activities that start a new task (the root activity); it's ignored for all other activities in the task.
+When the value is "true", every time users start the task again, they are brought to its root activity regardless of what they were last doing in the task and regardless of whether they used the Back or Home button to leave it. When the value is "false", the task may be cleared of activities in some situations (see the alwaysRetainTaskState attribute), but not always.
 
+Suppose, for example, that someone launches activity P from the home screen, and from there goes to activity Q. The user next presses Home, and then returns to activity P. Normally, the user would see activity Q, since that is what they were last doing in P's task. However, if P set this flag to "true", all of the activities on top of it (Q in this case) were removed when the user pressed Home and the task went to the background. So the user sees only P when returning to the task.
+
+If this attribute and allowTaskReparenting are both "true", any activities that can be re-parented are moved to the task they share an affinity with; the remaining activities are then dropped, as described above.
+
+### android：finishOnTaskLaunch
+Whether or not an existing instance of the activity should be shut down (finished) whenever the user again launches its task (chooses the task on the home screen) — "true" if it should be shut down, and "false" if not. The default value is "false".
+If this attribute and allowTaskReparenting are both "true", this attribute trumps the other. The affinity of the activity is ignored. The activity is not re-parented, but destroyed.
 
 ***
 
