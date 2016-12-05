@@ -2,6 +2,8 @@
 
 ***
 
+写在前面：每一个Android APP在运行时都会创建一个Task，每个Task都包含一个栈结构（被称为“回退栈”）。
+
 ## 1. 生命周期
 
 ![](images/activity_lifecycle.png)
@@ -218,67 +220,67 @@ ComponentName(Parcel in)
 
 ## 5. Activity的常见属性
 
-### android:name
+### （1）android:name
 唯一必须设置的属性，标识了Activity的类，其值可以为：
 - 相对类名（相对于<manifest/>中的package的属性值），指定相对类名时，以“.”开头，类由package+android：name来确定
 
 - 绝对类名（完整的类名）
 
-### android：label
+### （2）android：label
 标题文本
 
-### android：icon
+### （3）android：icon
 标题图像
 
 **如果未设置Activity的android：label或android：icon，会使用Application的同名属性；如Application也未设置，会使用系统的默认值**
 
-### android：screenOrientation
+### （4）android：screenOrientation
 Activity显示的方向。在Java代码中，可使用
 <pre><code>
 void setRequestedOrientation(int requestedOrientation)
 </code></pre>
 
-### android:configChanges
+### （5）android:configChanges
 默认情况下，配置变化后，Activity会自己通过销毁和重建的方式来出来这些变化。但可以通过android：configChanges属性来改变这种情况。
 
 可以通过android：configChanges来指定一项或多项配置，那么当这些配置发生变化时，系统会回调<pre><code>
 public void onConfigurationChanged (Configuration newConfig)
 </code></pre>
 
-### android:enabled
+### （6）android:enabled
 是否允许该Activity被实例化，默认值为true。
 如设为false，则该Activity不能被实例化。
 
-### android：excludeFromRecents
+### （7）android：excludeFromRecents
 是否将该Activity排除在最近应用之外。默认值为false。
 如设为true，则该Activity不会显示在最近应用的列表中。
 
-### android：exported
+### （8）android：exported
 是否允许其他APP访问该Activity，默认为true。其值在对于APP内部的访问无效果。
 **即使exported被设为true，也必须指定一个Action才能实现“隐式访问”的效果**
 
-### android：hardwareAccelerated
+### （9）android：hardwareAccelerated
 硬件加速。默认为false。
 
-### android：multiprocess
+### （11）android：multiprocess
 该Activity的实例能否运行在多个process中。默认值是false。
 
 默认情况下，Activity实例运行在定义它的APP的进程中，因此所有的实例运行在同一个process中。然而，当android：multiprocess被设为true时，Activity的实例运行在启动它的组件的process中（也就是说同一Activity的不同实例运行在不同的process中）
 
-### android：noHistory
+### （12）android：noHistory
 该Activity是否不进入回退栈，默认为false。
 如设为true，那么该Activity不会进入回退栈，当用户离开它时（比如通过startActivity启动一个其他的Activity）时，它的finish()被调用，用户无法返回到该Activity，它的onActivityResult永远不会得到调用。
 
 
-### android：parentActivityName
+### （13）android：parentActivityName
 该Activity的逻辑parent，即当用户点击Action Bar中的UP按钮时，系统会根据这个属性的值来决定哪一个Activity将会被启用。
 
-### android：permission
+### （14）android：permission
 该Activity的权限。如果一个组件通过startActivity或startActivityForResult试图启动这个Activity时，该组件需要在它的manifest中使用<uses-permission\>声明这一权限，否则此Activity不会受到intent。
 如果android：permission未被设置，它会使用<application\>的同名属性，如果<application\>也未设置该属性，那么该Activity没有被权限保护。
 
 
-### android：process
+### （15）android：process
 指明此Activity应该运行在的process。
 通常情况下，一个APP的所有组件都运行在同一个process中，这个process的名称就是APP的名称。
 
@@ -289,44 +291,187 @@ android：process这个属性就允许你修改默认的process名称，从而�
 - 不以“：”开头，该process是全局的，这意味着不同APP中的组件可以共享这一process。
 
 
-### android：stateNotNeeded
+### （16）android：stateNotNeeded
+是否不需要保存状态。默认为false。
 
-Whether or not the activity can be killed and successfully restarted without having saved its state — "true" if it can be restarted without reference to its previous state, and "false" if its previous state is required. The default value is "false".
-Normally, before an activity is temporarily shut down to save resources, its onSaveInstanceState() method is called. This method stores the current state of the activity in a Bundle object, which is then passed to onCreate() when the activity is restarted. If this attribute is set to "true", onSaveInstanceState() may not be called and onCreate() will be passed null instead of the Bundle — just as it was when the activity started for the first time.
-
-A "true" setting ensures that the activity can be restarted in the absence of retained state. For example, the activity that displays the home screen uses this setting to make sure that it does not get removed if it crashes for some reason.
-
-### android：theme
-
-A reference to a style resource defining an overall theme for the activity. This automatically sets the activity's context to use this theme (see setTheme(), and may also cause "starting" animations prior to the activity being launched (to better match what the activity actually looks like).
-If this attribute is not set, the activity inherits the theme set for the application as a whole — from the <application> element's theme attribute. If that attribute is also not set, the default system theme is used. For more information, see the Styles and Themes developer guide.
-
-### android：uiOptions
+如设为true，该Activity的onSaveInstanceState永远不会被调用，onCreate中的Bundle永远为null。
 
 
+### （17）android：theme
+主题。
 
-### android：alwaysRetainTaskState
+在代码中可使用setTheme。
 
-Whether or not the state of the task that the activity is in will always be maintained by the system — "true" if it will be, and "false" if the system is allowed to reset the task to its initial state in certain situations. The default value is "false". This attribute is meaningful only for the root activity of a task; it's ignored for all other activities.
-Normally, the system clears a task (removes all activities from the stack above the root activity) in certain situations when the user re-selects that task from the home screen. Typically, this is done if the user hasn't visited the task for a certain amount of time, such as 30 minutes.
+如果该属性未设置，将会使用<application\>中的同名属性，如果<application\>也没有设置，将使用系统默认属性。
 
-However, when this attribute is "true", users will always return to the task in its last state, regardless of how they get there. This is useful, for example, in an application like the web browser where there is a lot of state (such as multiple open tabs) that users would not like to lose.
-### android：clearTaskOnLaunch
 
-Whether or not all activities will be removed from the task, except for the root activity, whenever it is re-launched from the home screen — "true" if the task is always stripped down to its root activity, and "false" if not. The default value is "false". This attribute is meaningful only for activities that start a new task (the root activity); it's ignored for all other activities in the task.
-When the value is "true", every time users start the task again, they are brought to its root activity regardless of what they were last doing in the task and regardless of whether they used the Back or Home button to leave it. When the value is "false", the task may be cleared of activities in some situations (see the alwaysRetainTaskState attribute), but not always.
 
-Suppose, for example, that someone launches activity P from the home screen, and from there goes to activity Q. The user next presses Home, and then returns to activity P. Normally, the user would see activity Q, since that is what they were last doing in P's task. However, if P set this flag to "true", all of the activities on top of it (Q in this case) were removed when the user pressed Home and the task went to the background. So the user sees only P when returning to the task.
+### （18）android：uiOptions
 
-If this attribute and allowTaskReparenting are both "true", any activities that can be re-parented are moved to the task they share an affinity with; the remaining activities are then dropped, as described above.
+暂缺
 
-### android：finishOnTaskLaunch
-Whether or not an existing instance of the activity should be shut down (finished) whenever the user again launches its task (chooses the task on the home screen) — "true" if it should be shut down, and "false" if not. The default value is "false".
-If this attribute and allowTaskReparenting are both "true", this attribute trumps the other. The affinity of the activity is ignored. The activity is not re-parented, but destroyed.
+### （19）android：alwaysRetainTaskState
+该Activity所在的task的状态是否需要系统一直保持。默认为false。
+
+当设为true时，无论用户离开该Activity所在的Task多长时间，系统都不会销毁此Task回退栈中的任何窗口。
+
+**注意：这个属性只对Task中的根Activity有效，其他Activity即使设置了这个属性也会被忽略掉**
+
+通常，系统会在某些情况下清理一个Task（也就是说移除其根Activity之上的所有窗口），这通常发生在用户一段时间内没有访问这个Task（比如30分钟）同时由从HOME screen中选择了这个APP的时候。
+
+但是，当这个属性被设为true时，用户返回到这个task时，永远看到的是它最后的状态。
+
+### （20）android：clearTaskOnLaunch
+
+与android:alwaysRetainTaskState作用相反。决定当该APP从HOME screen被重新启动时，是否要将除根Activity之外的其他所有窗口出栈。默认为false。
+
+当设为true时，无论何时，该task一旦被切入后台（哪怕是很短的时间），task的回退栈中除根Activity之外的所有Activity都被移除。那么，当用户从HOME screen中再次选择这个APP时，看到的永远是根Activity。
+
+当设为false时，系统会在某些情况下清理一个Task（也就是说移除其根Activity之上的所有窗口），这通常发生在用户一段时间内没有访问这个Task（比如30分钟）同时由从HOME screen中选择了这个APP的时候。
+
+**注意：这个属性只对根Activity有效，其他Activity即使设置了也会被忽略**
+
+假如，如果从HOME screen启动一个Activity P（P为根Activity），然后转至Activity Q，然后用户按HOME键将此Task切入后台，当用户再次点击APP图标试图返回该Task时：
+
+- 如果未设置android：clearTaskOnLaunch，用户将可能看到Q（除非用户过了很长时间才返回该Task，比如30分钟）
+
+- 如果将android：clearTaskOnLaunch设为true，无论何时返回，用户都将看到P。
+
+**注意：如果这个属性和android：allowTaskReparenting都设为true时，那么所有能够re-parented的Activity都会被转移到他们taskAffinity指定的task，剩下的将会被出栈。**
+
+
+### （21）android：finishOnTaskLaunch
+当用户再次启动task时，此Activity的实例是否被销毁。默认为false。
+
+此属性与android：clearTaskOnLaunch类似，不过android：finishOnTaskLaunch针对的是一个Activity，而android：clearTaskOnLaunch针对的是整个task。
+
+例如：目前回退栈中含有三个Activity，A-B-C，其中C为栈顶。如果C的android：finishOnTaskLaunch被设为true，那么当这个task被切入后台后，C将被销毁，栈中将剩下A-B，当用户再次返回到这个task时，将见到B。
+
+**注意：此属性对根Activity无效。**
+**注意：如果这个属性和allowTaskReparenting都被设为true，此属性优先，此Activity会被销毁而不被re-parent。**
+
+### （22）android：taskAffinity
+
+应与FLAG\_ACTIVITY\_NEW\_TASK配合使用。
+
+每个Activity都有taskAffinity属性，指明了它希望进入的Task（即它希望使用的回退栈）。
+
+如果没有指定，将使用<application\>的同名属性，如果<application\>也没有指定该属性，将使用Activity所在的**包名**作为默认值。
+
+The task that the activity has an affinity for. Activities with the same affinity conceptually belong to the same task (to the same "application" from the user's perspective). The affinity of a task is determined by the affinity of its root activity.
+The affinity determines two things — the task that the activity is re-parented to (see the allowTaskReparenting attribute) and the task that will house the activity when it is launched with the FLAG_ACTIVITY_NEW_TASK flag.
+
+By default, all activities in an application have the same affinity. You can set this attribute to group them differently, and even place activities defined in different applications within the same task. To specify that the activity does not have an affinity for any task, set it to an empty string.
+
+If this attribute is not set, the activity inherits the affinity set for the application (see the <application> element's taskAffinity attribute). The name of the default affinity for an application is the package name set by the <manifest> element.
+
+### （23）android：allowTaskReparenting
+
+Whether or not the activity can move from the task that started it to the task it has an affinity for when that task is next brought to the front — "true" if it can move, and "false" if it must remain with the task where it started.
+If this attribute is not set, the value set by the corresponding allowTaskReparenting attribute of the <application> element applies to the activity. The default value is "false".
+
+Normally when an activity is started, it's associated with the task of the activity that started it and it stays there for its entire lifetime. You can use this attribute to force it to be re-parented to the task it has an affinity for when its current task is no longer displayed. Typically, it's used to cause the activities of an application to move to the main task associated with that application.
+
+For example, if an e-mail message contains a link to a web page, clicking the link brings up an activity that can display the page. That activity is defined by the browser application, but is launched as part of the e-mail task. If it's reparented to the browser task, it will be shown when the browser next comes to the front, and will be absent when the e-mail task again comes forward.
+
+The affinity of an activity is defined by the taskAffinity attribute. The affinity of a task is determined by reading the affinity of its root activity. Therefore, by definition, a root activity is always in a task with the same affinity. Since activities with "singleTask" or "singleInstance" launch modes can only be at the root of a task, re-parenting is limited to the "standard" and "singleTop" modes. (See also the launchMode attribute.)
 
 ***
 
 ## 6. Activity的启动模式与Flags
+
+### 6.1 四种创建模式（Task的模式）
+
+通过android：launchMode指定
+
+#### （1）standard
+
+默认的启动模式。一个Activity可以有多个实例，每一个实例可以属于不同的task，一个task可以有同一个Activity的多个实例。
+
+#### （2）singleTop
+
+两类情况：
+
+- 情况一：该Activity的实例刚好处于当前Task的回退栈的栈顶位置，直接使用该实例，同时调用其onNewIntent方法。
+
+- 情况二：该Activity的实例不在当前Task的回退栈中，或者，虽在回退栈中但不处于栈顶位置，创建该Activity的实例，并将其压入回退栈
+
+
+#### （3）singleTask
+
+五类情况：
+
+- 情况一：调用同一APP中的Activity，在当前Task的回退栈中不存在该Activity的实例，创建一个实例，并压入回退栈中
+
+- 情况二：调用同一APP中的Activity，在当前Task的回退栈中存在该Activity的实例，将该实例之上的所有对象出栈（onDestory），并调用该实例的onNewIntent
+
+- 情况三：调用不同APP中的Activity，如果该Activity要求的Task不存在，创建该Task，并且创建该Activity的实例，将其压入新创建的Task的栈顶
+
+- 情况四：调用不同APP中的Activity，如果该Activity要求的Task已存在，同时在该Task的回退栈中没有该Activity的实例，那么首先切换到该Task，并创建该Activity的实例，将其压入此Task的回退栈中
+
+- 情况五：调用不同APP中的Activity，如果该Activity要求的Task已经存在，同时在该Task的回退栈中含有该Activity的实例，那么首先切换到该Task，同时将该Activity实例之上的所有对象出栈（onDestory），接着调用该Activity实例的onNewIntent
+
+#### （4）singleInstance
+
+被声明为singleInstance的Activity，要求整个Task中只有一个该Activity的实例，不允许存在其他对象。
+
+被声明为singleInstance的Activity，具有全局唯一性，整个系统中只有一个实例。
+
+两种情况：
+
+- 情况一：调用被声明为singleInstance的Activity（无论该Activity是否与调用者在同一个APP中），该Activity的实例在系统中不存在，创建一个新Task，并创建一个Activity实例，将该实例压入新建Task的回退栈。
+
+- 情况二：调用被声明为singleInstance的Activity（无论该Activity是否与调用者在同一个APP中），如果该Activity在系统中已经存在，那么切换到其所在的Task（注意没有调用onNewIntent）
+
+**注意：无论调用者和被声明为singleInstance的Activity是否在一个Task中，只要系统中没有该Activity的实例，一定会创建一个新任务。**
+
+### 6.2 影响创建模式的Flags
+
+#### （1）FLAG\_ACTIVITY\_SINGLE\_TOP
+
+相当于singleTop的launchMode
+
+#### （2）FLAG\_ACTIVITY\_CLEAR\_TOP
+
+三种情况：
+
+- 情况一：该Activity不在回退栈中，创建一个实例，压入回退栈
+
+- 情况二：该Activity已经在回退栈中存在，它的launchMode为“standard”，同时Intent中没有指定FLAG\_ACTIVITY\_SINGLE\_TOP，那么将会把此Activity和在它之上的所有Activity对象全部出栈（onDestroy）。然后新建一个该Activity的实例，并压入回退栈。
+
+- 情况三：该Activity已经在回退栈中存在，同时它不满足情况二中的描述，那么在它之上的所有Activity对象被出栈（onDestroy），而它本身被复用，它的onNewIntent被调用。
+
+#### （3）FLAG\_ACTIVITY\_NEW\_TASK
+
+一般与android：taskAffinity配合使用。
+
+
+当使用FLAG\_ACTIVITY\_NEW\_TASK启动某个Activity时，系统会寻找或创建一个Task来放置此Activity，具体来讲就是根据其android：taskAffinity的值来匹配，有两种情况：
+
+- 情况一： 如果能够找到一个Task与该Activity中android：taskAffinity的设定值匹配，那么会切换到该Task，并创建一个Activity的实例，压入其回退栈。
+
+- 情况二：如果在系统中找不到能够与android：taskAffinity的设定值相匹配的Task，那么首先创建一个Task，将此Task的affinity设置为该Activity的android：taskAffinity属性要求的值，同时创建一个Activity的实例，压入到此Task的回退栈中。
+
+**注意：在同一个APP中，当所有的Activity都使用默认值，或者android：taskAffinity被指定了相同的值时，此标志不起作用。**
+
+**注意：如果在BroadcastReceiver的onReceive中需要启动一个Activity时，务必在Intent中加入FLAG\_ACTIVITY\_NEW\_TASK标志。**
+
+#### （4）FLAG\_ACTIVITY\_CLEAR\_TASK
+
+必须配合FLAG\_ACTIVITY\_NEW\_TASK标志使用。
+
+当用含有这个标志的Intent启动某个Activity时，会将当前Task的回退栈中的所有Activity对象销毁（onDestory），然后重新创建此Activity，将其作为新的Task的根Activity。
+
+#### （5）FLAG\_ACTIVITY\_REORDER\_TO\_FRONT
+
+调整Activity在回退栈中的顺序。
+
+当使用此标志启动某一Activity时，如果在回退栈中有它的实例，那么会把它调至栈顶，同时调用它的onNewIntent方法。
+
+例：
+回退栈中有四个Activity对象，A-B-C-D，其中D为栈顶。此时用FLAG\_ACTIVITY\_REORDER\_TO\_FRONT启动B，那么回退栈变为A-C-D-B，同时B的onNewIntent方法被调用。
+
+**注意：如果与FLAG\_ACTIVITY\_CLEAR\_TOP同时被设置，那么FLAG\_ACTIVITY\_REORDER\_TO\_FRONT将不起作用。**
 
 ***
 
@@ -351,6 +496,12 @@ If this attribute and allowTaskReparenting are both "true", this attribute trump
 ***
 
 ## 9. 显示系统窗口
+
+
+
+## 10. 疑问
+1、task与process的关系？
+2、FLAG\_ACTIVITY\_CLEAR\_TASK是否与原来是同一个task？
 
 
 

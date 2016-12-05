@@ -23,3 +23,5 @@
 ### DialogFragment
 
 ### PreferenceFragment
+
+一个guide 5个training
