@@ -47,7 +47,7 @@
 
 当给用户呈现出“原地编辑（edit in place）”的模式时，onPause需要保存当前Acitivity正在编辑的持久化数据，从而保证如果不满足onSaveInstanceState调用条件的情况下，此类数据的更改不会丢失。
 
-常见的做法是：onSaveInstanceState保存按实例（per-instance）的信息，而onPause用于保存全局性的持久化数据（比如在ContentProvider中的，file中的）
+**常见的做法是：onSaveInstanceState保存按实例（per-instance）的信息，而onPause用于保存全局性的持久化数据（比如在ContentProvider中的，file中的）**
 
 
 ### onDestroy
@@ -352,29 +352,40 @@ android：process这个属性就允许你修改默认的process名称，从而�
 
 ### （22）android：taskAffinity
 
-应与FLAG\_ACTIVITY\_NEW\_TASK配合使用。
+应与FLAG\_ACTIVITY\_NEW\_TASK配合使用，也可与android：allowTaskReparenting配合使用。
 
-每个Activity都有taskAffinity属性，指明了它希望进入的Task（即它希望使用的回退栈）。
+拥有相同taskAffinity的多个Activity在概念上被认为属于同一个task（从用户的角度看，属于同一个APP）。一个Task的affinity由它的根Activity的taskAffinity决定。
+
+Activity的taskAffinity决定了两件事：
+
+- 其一，决定了该Activity在re-parented时的task（可参见android：allowTaskReparenting属性）。
+
+- 其二，决定了当该Activity以FLAG\_ACTIVITY\_NEW\_TASK的方式启动时,该Activity将运行在哪个task中，即它希望使用的回退栈
+
+默认情况下，在同一个APP中的所有Activity具有相同的taskAffinity。通过android：taskAffinity可以改变这一默认情况，比如将同一APP的Activity分到不同的task，或者把不同APP的Activity放入同一个task。
+
+如果希望某个Activity不与任何task存在affinity时，可为android：taskAffinity设置空字符串。
 
 如果没有指定，将使用<application\>的同名属性，如果<application\>也没有指定该属性，将使用Activity所在的**包名**作为默认值。
 
-The task that the activity has an affinity for. Activities with the same affinity conceptually belong to the same task (to the same "application" from the user's perspective). The affinity of a task is determined by the affinity of its root activity.
-The affinity determines two things — the task that the activity is re-parented to (see the allowTaskReparenting attribute) and the task that will house the activity when it is launched with the FLAG_ACTIVITY_NEW_TASK flag.
-
-By default, all activities in an application have the same affinity. You can set this attribute to group them differently, and even place activities defined in different applications within the same task. To specify that the activity does not have an affinity for any task, set it to an empty string.
-
-If this attribute is not set, the activity inherits the affinity set for the application (see the <application> element's taskAffinity attribute). The name of the default affinity for an application is the package name set by the <manifest> element.
 
 ### （23）android：allowTaskReparenting
 
-Whether or not the activity can move from the task that started it to the task it has an affinity for when that task is next brought to the front — "true" if it can move, and "false" if it must remain with the task where it started.
-If this attribute is not set, the value set by the corresponding allowTaskReparenting attribute of the <application> element applies to the activity. The default value is "false".
+如果某Activity的android：allowTaskReparenting被设为true，那么当它所在的task A被切换至后台后，一旦有与此Activity的taskAffinity属性相同的另一个task B切换到前台，那么此Activity会从原来的task A移动到task B。
 
-Normally when an activity is started, it's associated with the task of the activity that started it and it stays there for its entire lifetime. You can use this attribute to force it to be re-parented to the task it has an affinity for when its current task is no longer displayed. Typically, it's used to cause the activities of an application to move to the main task associated with that application.
+默认值是false（此Activity始终停留在启动它的task中）
 
-For example, if an e-mail message contains a link to a web page, clicking the link brings up an activity that can display the page. That activity is defined by the browser application, but is launched as part of the e-mail task. If it's reparented to the browser task, it will be shown when the browser next comes to the front, and will be absent when the e-mail task again comes forward.
+如果没有指定，将使用<application\>的同名属性。
 
-The affinity of an activity is defined by the taskAffinity attribute. The affinity of a task is determined by reading the affinity of its root activity. Therefore, by definition, a root activity is always in a task with the same affinity. Since activities with "singleTask" or "singleInstance" launch modes can only be at the root of a task, re-parenting is limited to the "standard" and "singleTop" modes. (See also the launchMode attribute.)
+通常，当一个Activity启动时，它将与启动它的task相关联，并且在此Activity的整个生命周期中都待在此task中。
+
+当指定android：allowTaskReparenting时，能够在启动它的task不显示时（切换到后台时），将此Activity强行re-parented至另一个具有相同affinity值的task中。（比较典型的情况是将此Activity移动至此APP的main task中。）
+
+**注意：移动是单向的，不可逆的**
+
+例：一个e-mail消息中含有一个网页的链接，点击这个链接将打开一个Activity A显示该网页。A是定义在浏览器的APP中的，但是它是作为e-mail task的一部分被启动的（跨APP调用）。如果Activity A被re-parented到浏览器的task中，它将在浏览器被切换至前台时显示出来，而当e-mail的task被切换至前台时不会显示出来（因为已经被移走了）。
+
+Activity的affinity有android：taskAffinity指定。Task的affinity则是由其根Activity的affinity决定。然而，根据规定，根 Activity 总是位于 affinity 同名的Task中。 因为以“singleTask”和“singleInstance" 模式启动的 Activity 只能位于task的根部（singleInstance必然是这样，因为它的task中只有一个Activity，必然是根Activity；singleTask启动新task也必然是这样）， **所以 Activity 的re-parented仅限于“standard”和“singleTop”启动模式。**
 
 ***
 
@@ -501,8 +512,16 @@ The affinity of an activity is defined by the taskAffinity attribute. The affini
 
 ## 10. 疑问
 1、task与process的关系？
+
+
+
 2、FLAG\_ACTIVITY\_CLEAR\_TASK是否与原来是同一个task？
 
+答：是同一个task，不过所有的Activity都被清空
+
+3、在不指定allowTaskReparenting、同时不使用FLAG\_ACTIVITY\_NEW\_TASK的情况下，taskAffinity能不能起作用？
+
+答：无作用
 
 
 
