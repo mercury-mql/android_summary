@@ -81,6 +81,8 @@ onSaveInstanceState的默认实现会将Activity中有android：id的UI控件的
 
 被onSaveInstanceState保存下来的状态（Bundle对象）可在onCreate或onRestoreInstanceState中恢复，更常见的是在onCreate中。
 
+当configChanges时（比如屏幕旋转），onSaveInstanceState也会被调用。
+
 
 ### finish
 
@@ -241,7 +243,9 @@ void setRequestedOrientation(int requestedOrientation)
 </code></pre>
 
 ### （5）android:configChanges
-默认情况下，配置变化后，Activity会自己通过销毁和重建的方式来出来这些变化。但可以通过android：configChanges属性来改变这种情况。
+默认情况下，配置变化后，Activity会自己通过销毁和重建的方式来出来这些变化。Activity会经历onPause、onStop、onDestory等一系列过程，期间会伴随的onSaveInstanceState的调用。当Activity处于前台或对用户可见时，一旦onDestroy被调用，那么Activity的原实例被销毁，新实例被创建，同时可以取到onSaveInstanceState中保存的状态。
+
+但可以通过android：configChanges属性来改变这种情况。
 
 可以通过android：configChanges来指定一项或多项配置，那么当这些配置发生变化时，系统会回调<pre><code>
 public void onConfigurationChanged (Configuration newConfig)
@@ -523,6 +527,7 @@ Activity的affinity有android：taskAffinity指定。Task的affinity则是由其
 
 答：无作用
 
+4、旋转屏幕时，都有哪些生命周期方法被调用，onSaveInstanceState会被调用吗，它保存的状态可以在onCreate中取到吗？
 
 
 
