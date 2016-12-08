@@ -14,8 +14,8 @@ Fragment可以作为Activity UI的一部分，也可以设置为无UI的Fragment
 
 **注意： 当Fragment处于活动（active）状态时：**
 
-- 如果用户回退、replace、remove此Fragment，会依次调用onPause-onStop-onDestroyView-onDestroy-onDetach
-- 如果用户先将Fragment放入回退栈，然后又remove、replace该Fragment时，会依次调用onPause-onStop-onDestroyView，当该Fragment从回退栈返回时，会调用onCreateView
+- 如果用户回退、replace、remove此Fragment，会依次调用**onPause-onStop-onDestroyView-onDestroy-onDetach**
+- 如果用户先将Fragment放入回退栈，然后又remove、replace该Fragment时，会依次调用**onPause-onStop-onDestroyView**，当该Fragment从回退栈返回时，会调用onCreateView
 
 
 ### 1. onInflate
@@ -69,7 +69,8 @@ public static class MyFragment extends Fragment {
         View v = inflater.inflate(R.layout.hello_world, container, false);
         View tv = v.findViewById(R.id.text);
         ((TextView)tv).setText(mLabel != null ? mLabel : "(no label)");
-        tv.setBackgroundDrawable(getResources().getDrawable(android.R.drawable.gallery_thumb));
+        tv.setBackgroundDrawable(
+               getResources().getDrawable(android.R.drawable.gallery_thumb));
         return v;
     }
 }
@@ -129,6 +130,8 @@ public void onCreate (Bundle savedInstanceState)
 用于读取保存的状态，获取或初始化一部分数据。
 
 **注意：调用这个方法时，它所在的Activity还在创建过程中**
+
+**一般会在此处调用setRetainInstance**
 
 通常都会实现这一方法。
 
@@ -283,13 +286,202 @@ public void onSaveInstanceState (Bundle outState)
 
 ### 2. getView
 
+<pre><code>
 public View getView ()
+</code></pre>
 
-Get the root view for the fragment's layout (the one returned by onCreateView(LayoutInflater, ViewGroup, Bundle)), if provided.
+获取onCreateView创建的view。
 
 
 ### 3. setRetainInstance
 
+<pre><code>
+public void setRetainInstance (boolean retain)
+</code></pre>
+
+在Activity因configChanges等原因而需要重新创建时，控制一个Fragment对象是否保持。
+
+**注意：仅用于不在回退栈中的Fragment**
+
+如果设为true，当Activity被销毁并重建时，
+
+- Fragment.onDestroy、Fragment.onCreate均不会调用。
+- Fragment.onAttach、Fragment.onDetach、Fragment.onActivityCreated将会被调用。
+
+
+在配置发生变化(Configuration changs)时，保存活动对象方法（比如运行中的线程，Sockets，AsyncTask）可以使用此方法。引用[http://www.cnblogs.com/kissazi2/p/4116456.html](http://www.cnblogs.com/kissazi2/p/4116456.html)
+
+配置改变&后台线程（Configuration Changes & Background Tasks）
+
+配置发生变化以及销毁和重新创建穿越了整个Activity的生命周期，并且引出一个问题，那就是这些事件的发生是不可预测并且在任何时候都可能触发。并发的后台线程只加剧了这个问题。假设在Activity中启动了一个AsyncTask，然后用户马上旋转屏幕，这会导致Activity被销毁和重新创建。当AsyncTask最后完成它的任务，它会将结果反馈到旧的Activity实例，完全没有意识到新的activity已经被创建了。似乎这不是一个问题，新的Activity实例又会让浪费宝贵的资源重新启动一个后台线程，而不知道旧的AsyncTask已经在运行。由于这些原因，在配置变化的时候我们需要正确、有效地保存在Activity实例的活动对象。
+
+**设置android:configChanges属性一般不是好的做法。**
+
+跨越Activity保留活动对象（比如运行中的线程，Sockets，AsyncTask）的推荐方法是在一个Retained Fragment中包装和管理它们。默认情况下，当配置发生变化时，Fragment会随着它们的宿主Activity被创建和销毁。调用Fragment.setRetaininstance(true)允许我们跳过销毁和重新创建的周期。指示系统保留当前的fragment实例，即使是在Activity被创新创建的时候。不难想到使用fragment持有像运行中的线程、AsyncTask、Socket等对象将有效地解决上面的问题。
+
+下面代码演示如何使用fragment在配置发生变化的时候保存AsyncTask的状态。这段代码保证了最新的进度和结果能够被传回更当前正在显示的Activity实例，并确保我们不会在配置发生变化的时候丢失AsyncTask的状态。下面代码包含两个类，一个MainActivity...
+
+<pre><code>
+ 1 /**
+ 2  * 这个Activity主要用来展示UI，创建一个TaskFragment来管理任务，
+ 3  * 从TaskFragment接收进度以及执行结果.
+ 4  */
+ 5 public class MainActivity extends Activity implements TaskFragment.TaskCallbacks {
+ 6 
+ 7   private static final String TAG_TASK_FRAGMENT = "task_fragment";
+ 8 
+ 9   private TaskFragment mTaskFragment;
+10 
+11   @Override
+12   protected void onCreate(Bundle savedInstanceState) {
+13     super.onCreate(savedInstanceState);
+14     setContentView(R.layout.main);
+15 
+16     FragmentManager fm = getFragmentManager();
+17     mTaskFragment = (TaskFragment) fm.findFragmentByTag(TAG_TASK_FRAGMENT);
+18 
+19     //如果Fragment不为null，那么它就是在配置变化的时候被保存下来的
+20     if (mTaskFragment == null) {
+21       mTaskFragment = new TaskFragment();
+22       fm.beginTransaction().add(mTaskFragment, TAG_TASK_FRAGMENT).commit();
+23     }
+24 
+25     // TODO: 初始化View, 还原保存的状态, 等等.
+26   }
+27 
+28   //下面四个方法将在进度需要更新或者返回结果的时候被调用。
+29   //MainActivity需要更新UI来反应这些变化。
+30   @Override
+31   public void onPreExecute() { ... }
+32 
+33   @Override
+34   public void onProgressUpdate(int percent) { ... }
+35 
+36   @Override
+37   public void onCancelled() { ... }
+38 
+39   @Override
+40   public void onPostExecute() { ... }
+41 }
+</code></pre>
+
+
+...和一个 TaskFragment...（无UI的fragment）
+
+<pre><code>
+  1 /**
+  2  * 这个Fragment管理一个后台任务，在状态发生变化的时候能够保存下来，不被销毁
+  3  */
+  4 public class TaskFragment extends Fragment {
+  5 
+  6   /**
+  7    * 让Fragment通知Activity任务进度和返回结果的回调接口
+  8    */
+  9   static interface TaskCallbacks {
+ 10     void onPreExecute();
+ 11     void onProgressUpdate(int percent);
+ 12     void onCancelled();
+ 13     void onPostExecute();
+ 14   }
+ 15 
+ 16   private TaskCallbacks mCallbacks;
+ 17   private DummyTask mTask;
+ 18 
+ 19   /**
+ 20    * 持有一个父Activity的引用，以便在任务进度变化和需要返回结果的时候通知它。
+ 21    * 在每一次配置变化后，Android Framework会将新创建的Activity的引用传递给我们
+ 22    */
+ 23   @Override
+ 24   public void onAttach(Activity activity) {
+ 25     super.onAttach(activity);
+ 26     mCallbacks = (TaskCallbacks) activity;
+ 27   }
+ 28 
+ 29   /**
+ 30     *这个方法只会被调用一次，只在这个被保存Fragment第一次被创建的时候
+ 31    */
+ 32   @Override
+ 33   public void onCreate(Bundle savedInstanceState) {
+ 34     super.onCreate(savedInstanceState);
+ 35 
+ 36     //在配置变化的时候将这个fragment保存下来
+ 37     setRetainInstance(true);
+ 38     
+ 39 
+ 40     // 创建并执行后台任务
+ 41     mTask = new DummyTask();
+ 42     mTask.execute();
+ 43   }
+ 44 
+ 45   /**
+ 46    * 设置回调对象为null，防止我们意外导致Activity实例泄露（leak the Activity instance）
+ 47    */
+ 48   @Override
+ 49   public void onDetach() {
+ 50     super.onDetach();
+ 51     mCallbacks = null;
+ 52   }
+ 53 
+ 54   /**
+ 55    * 一个示例性的任务用来表示一些后台任务并且通过回调函数向Activity
+ 56    * 报告任务进度和返回结果
+ 57    *
+ 58    * 注意：我们需要在每一个方法中检查回调对象是否为null，以防它们
+ 59    * 在Activity或Fragment的onDestroy()执行后被调用。
+ 60    */
+ 61   private class DummyTask extends AsyncTask<Void, Integer, Void> {
+ 62 
+ 63     @Override
+ 64     protected void onPreExecute() {
+ 65       if (mCallbacks != null) {
+ 66         mCallbacks.onPreExecute();
+ 67       }
+ 68     }
+ 69 
+ 70     /**
+ 71      * 注意：我们不在后台线程的doInbackground方法中直接调用回调
+ 72      * 对象的方法，因为这样可能产生竞态条件
+ 73      */
+ 74     @Override
+ 75     protected Void doInBackground(Void... ignore) {
+ 76       for (int i = 0; !isCancelled() && i < 100; i++) {
+ 77         SystemClock.sleep(100);
+ 78         publishProgress(i);
+ 79       }
+ 80       return null;
+ 81     }
+ 82 
+ 83     @Override
+ 84     protected void onProgressUpdate(Integer... percent) {
+ 85       if (mCallbacks != null) {
+ 86         mCallbacks.onProgressUpdate(percent[0]);
+ 87       }
+ 88     }
+ 89 
+ 90     @Override
+ 91     protected void onCancelled() {
+ 92       if (mCallbacks != null) {
+ 93         mCallbacks.onCancelled();
+ 94       }
+ 95     }
+ 96 
+ 97     @Override
+ 98     protected void onPostExecute(Void ignore) {
+ 99       if (mCallbacks != null) {
+100         mCallbacks.onPostExecute();
+101       }
+102     }
+103   }
+104 }
+
+</code></pre>
+
+当MainActivity第一次启动的时候，它实例化并将TaskFragment添加到Activity的状态中。TaskFragment创建并执行AsyncTask并通过TaskCallBack接口将任务处理进度和结果回传给MainActivity。当配置变化时，MainActivity正常地经历它的生命周期事件（onPause、onStop、onDestroy、onCreate、onStart、onResume等），但是一旦新Activity实例被重新创建，那它就会被传递到onAttach(Activity)方法中，这就保证了TaskFragment会一直持有当前显示的新Activity实例的引用，即使是在配置发生变化的时候。另外值得注意的是，onPostExecute()不会在onDetach()和onAttach()的之间被调用。具体的解释参考[StackOverflow](http://stackoverflow.com/q/19964180/844882 "StackOverflow的回答")的回答。
+
+在Activity的生命周期（涉及旧、新Activity的销毁和创建）中同步后台任务的运行状态可能非常棘手，并且配置发生变化加剧了这一麻烦。幸运的是使用一个retain fragment可以非常轻松地处理这些事件。它只要始终持有父Activity的引用，即使在父Activity被销毁和重新创建之后。
+
+
+**需要注意的是，要使用这种操作的Fragment不能加入backstack后退栈中。并且，被保存的Fragment实例不会保持太久，若长时间没有容器承载它，也会被系统回收掉的。**
 
 ## 创建方式
 
@@ -448,7 +640,7 @@ setArguments只能在Fragment与Activity关联（attach）之前调用，也就�
 
 与setArguments不同，getArguments可以在任何时间点调用。
 
-## 持久化
+## 持久化（此处是不使用setRetainInstance的版本）
 
 - 发生configChanges时，会导致onSaveInstanceState被调用。
 - fragment放入回退栈时，不会导致onSaveInstanceState被调用。那么当从回退栈中返回时，会丢失一些信息（比如成员变量）。因此，在进入回退栈之前，需要保存信息。在哪里保存？在onDestroyView中。onDestroyView中没有bundle怎么办？用fragment的Arguments对象。这个对象怎么得到？用getArguments方法。
@@ -652,7 +844,6 @@ FragmentTransaction.hide (Fragment fragment)
 ### 提交事务
 
 <pre><code>
-
 FragmentTransaction.commit ()
 </code></pre>
 
@@ -666,7 +857,81 @@ FragmentManager.executePendingTransactions ()
 
 ## Fragment与回退栈
 
+### 通过事务将Fragment加入回退栈（实际上，加入回退栈的是fragment对象的状态）
 
+<pre><code>
+FragmentTransaction.addToBackStack (String name)
+</code></pre>
+
+name可选，可以为null
+
+### 将Fragment从回退栈弹出（实际上，弹出的是fragment对象的状态）
+
+当Fragment被加入回退栈后，可以通过两种方式将其弹出：
+
+1. 用户点击“BACK”按键。
+2. 在代码中调用以下函数：
+
+(1) 异步，仅弹出栈顶状态（弹出就看不到了，看到的是之前栈顶下方的第一个）
+<pre><code>
+FragmentManager.popBackStack ()
+</code></pre>
+
+(2) 异步，能够将name之前的所有状态出栈（name就是addToBackStack时传入的参数值）。
+
+name对应的状态是否出栈，则由flags决定（0，该状态保留，可以看到；FragmentManager.POP_BACK_STACK_INCLUSIVE，该状态出栈，看不到了）。
+
+如果name为null，则只弹出栈顶。
+<pre><code>
+FragmentManager.popBackStack (String name, int flags)
+</code></pre>
+
+(3) 异步，能够将id之前的所有状态出栈（id就是commit时的返回值）。
+
+id对应的状态是否出栈，则有flags决定（0，该状态保留，可以看到；FragmentManager.POP_BACK_STACK_INCLUSIVE，该状态出栈，看不到了）。
+
+<pre><code>
+FragmentManager.popBackStack (int id, int flags)
+</code></pre>
+
+(4) popBackStack的同步版本。
+<pre><code>
+FragmentManager.popBackStackImmediate ()
+
+FragmentManager.popBackStackImmediate (String name, int flags)
+
+FragmentManager.popBackStackImmediate (int id, int flags)
+</code></pre>
+
+### 查看回退栈中Fragment
+
+- 获取回退栈中index处的fragment，栈底处index为0
+
+<pre><code>
+FragmentManager.getBackStackEntryAt (int index)
+</code></pre>
+
+- 获取回退栈中的fragment数目
+<pre><code>
+FragmentManager.getBackStackEntryCount ()
+</code></pre>
+
+### 监控回退栈状态
+
+FragmentManager.OnBackStackChangedListener接口
+
+- 注册
+<pre><code>
+FragmentManager.addOnBackStackChangedListener (
+                                  FragmentManager.OnBackStackChangedListener listener)
+</code></pre>
+
+
+- 注销
+<pre><code>
+FragmentManager.removeOnBackStackChangedListener (
+                                   FragmentManager.OnBackStackChangedListener listener)
+</code></pre>
 
 ## 重要的Fragment
 
@@ -675,5 +940,3 @@ FragmentManager.executePendingTransactions ()
 ### DialogFragment
 
 ### PreferenceFragment
-
-一个guide 5个training
