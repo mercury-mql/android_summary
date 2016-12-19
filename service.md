@@ -39,15 +39,6 @@ onCreate - onBind - onUnbind - onDestroy
 ![](images/service_binding_tree_lifecycle.png)
 
 
-When a service is unbound from all clients, the Android system destroys it (unless it was also started with onStartCommand()). As such, you don't have to manage the lifecycle of your service if it's purely a bound service—the Android system manages it for you based on whether it is bound to any clients.
-
-However, if you choose to implement the onStartCommand() callback method, then you must explicitly stop the service, because the service is now considered to be started. In this case, the service runs until the service stops itself with stopSelf() or another component calls stopService(), regardless of whether it is bound to any clients.
-
-Additionally, if your service is started and accepts binding, then when the system calls your onUnbind() method, you can optionally return true if you would like to receive a call to onRebind() the next time a client binds to the service. onRebind() returns void, but the client still receives the IBinder in its onServiceConnected() callback. Below, figure 1 illustrates the logic for this kind of lifecycle.
-
-
-
-
 **注意：started service和bound service并不是完全分离的。可以绑定一个started service。**
 例如：背景音乐service可以通过startService开启，当需要对某首乐曲进行精细的控制或者获取相关信息时，可以通过bindService将Activity与该Service绑定起来。
 
@@ -438,11 +429,7 @@ public class BindingActivity extends Activity {
 }
 
 </code></pre>
-The above sample shows how the client binds to the service using an implementation of ServiceConnection and the onServiceConnected() callback. The next section provides more information about this process of binding to the service.
 
-Note: The example above doesn't explicitly unbind from the service, but all clients should unbind at an appropriate time (such as when the activity pauses).
-
-For more sample code, see the LocalService.java class and the LocalServiceActivities.java class in ApiDemos.
 
 #### 2. 使用Messenger
 
